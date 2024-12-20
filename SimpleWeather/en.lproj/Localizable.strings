@@ -1,0 +1,7 @@
+"error_missing_city" = "Please enter a city name.";
+"error_invalid_city" = "City not found.";
+"error_api_key" = "API key is missing.";
+"error_network" = "Unable to connect to the network. Please try again later.";
+"error_title" = "Error";
+"error_location_fetch" = "Unable to fetch location. Please check your location settings.";
+"ok" = "OK";
