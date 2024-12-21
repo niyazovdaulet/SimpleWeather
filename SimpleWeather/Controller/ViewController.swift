@@ -29,6 +29,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate, UITextFieldDe
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        citytextField.textAlignment = .left
         cityLabel.alpha = 0.0
         tempLabel.alpha = 0.0
         conditionLabel.alpha = 0.0
@@ -56,7 +57,6 @@ class ViewController: UIViewController, CLLocationManagerDelegate, UITextFieldDe
     }
 
     // MARK: - CLLocationManagerDelegate
-
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         let status = manager.authorizationStatus
         switch status {
@@ -96,7 +96,6 @@ class ViewController: UIViewController, CLLocationManagerDelegate, UITextFieldDe
     }
 
     // MARK: - Fetch Weather Data
-
     func fetchWeather(for city: String) {
         guard let apiKey = apiKey else {
             showAlert(title: "Error", message: "API Key is missing.")
@@ -164,8 +163,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate, UITextFieldDe
         }
     }
 
-
-    // MARK: - Update UI with Custom Icons
+    // MARK: - Update UI
     func updateUI(with data: [String: Any]) {
         if let main = data["main"] as? [String: Any],
            let weatherArray = data["weather"] as? [[String: Any]],
@@ -174,40 +172,32 @@ class ViewController: UIViewController, CLLocationManagerDelegate, UITextFieldDe
             let temp = main["temp"] as? Double ?? 0.0
             let condition = weather["description"] as? String ?? "N/A"
             let city = data["name"] as? String ?? "Unknown"
-            let icon = weather["icon"] as? String ?? "01d"
             
             // Print weather condition for debugging
             print("Weather condition for \(city): \(condition)")
 
-            // Set background image based on condition
+            // Set custom background image based on the weather condition
             setBackgroundImage(for: condition)
 
+            // Set custom weather icon
+            setCustomIcon(for: condition)
+            
             DispatchQueue.main.async {
                 self.cityLabel.text = city
-                self.tempLabel.text = "\(Int(temp))°C" // Display integer temperature
+                self.tempLabel.text = "\(Int(temp))°C"
                 self.conditionLabel.text = condition.capitalized
-
-                // Load the weather icon asynchronously
-                let iconURL = URL(string: "https://openweathermap.org/img/wn/\(icon)@2x.png")
-                DispatchQueue.global().async {
-                    if let url = iconURL, let imageData = try? Data(contentsOf: url) {
-                        DispatchQueue.main.async {
-                            self.weatherIconImageView.image = UIImage(data: imageData)
-                        }
-                    }
-                }
             }
         }
     }
 
+    // MARK: - Set Custom Background
     func setBackgroundImage(for condition: String) {
         var imageName: String
 
-        // Set the background image based on the weather condition
         switch condition.lowercased() {
         case "clear sky", "few clouds":
             imageName = "clear_sky_background"
-        case "scattered clouds", "broken clouds":
+        case "scattered clouds", "broken clouds", "mist":
             imageName = "cloudy_background"
         case "rain", "light rain", "moderate rain":
             imageName = "rainy_background"
@@ -215,49 +205,38 @@ class ViewController: UIViewController, CLLocationManagerDelegate, UITextFieldDe
             imageName = "snowy_background"
         case "thunderstorm":
             imageName = "thunderstorm_background"
-        case "smoke", "misty":
-            imageName = "misty_background"
-        case "overcast clouds":
-            imageName = "scattered_clouds_background"
         default:
             imageName = "default_background"
         }
 
-        // Update the background image (make sure to add the images to your assets)
         DispatchQueue.main.async {
-            self.view.backgroundColor = .clear  // Reset any color or gradient background
             self.view.layer.contents = UIImage(named: imageName)?.cgImage
         }
     }
 
-    
-    // MARK: - Custom Weather Icon Method
-    func customWeatherIcon(for condition: String) -> UIImage? {
+    // MARK: - Set Custom Icon
+    func setCustomIcon(for condition: String) {
+        var imageName: String
+
         switch condition.lowercased() {
         case "clear sky":
-            return UIImage(named: "sunny")
-        case "few clouds":
-            return UIImage(named: "partly_cloudy")
-        case "scattered clouds":
-            return UIImage(named: "cloudy")
-        case "broken clouds":
-            return UIImage(named: "overcast")
-        case  "overcast clouds":
-            return UIImage(named: "cloudy")
-        case "shower rain":
-            return UIImage(named: "rainy")
-        case "rain", "moderate rain":
-            return UIImage(named: "rainy")
+            imageName = "sunny"
+        case "few clouds", "scattered clouds", "broken clouds", "overcast clouds":
+            imageName = "overcast"
+        case "rain", "light rain", "moderate rain":
+            imageName = "rainy"
+        case "snow", "light snow", "moderate snow":
+            imageName = "snowy"
         case "thunderstorm":
-            return UIImage(named: "thunderstorm")
-        case "snow":
-            return UIImage(named: "snowy")
-        case "mist":
-            return UIImage(named: "misty")
-        case "smoke":
-            return UIImage(named: "misty")
+            imageName = "thunderstorm"
+        case "mist", "cloudy":
+            imageName = "cloudy"
         default:
-            return UIImage(named: "default")
+            imageName = "custom_default"
+        }
+
+        DispatchQueue.main.async {
+            self.weatherIconImageView.image = UIImage(named: imageName)
         }
     }
 
@@ -274,7 +253,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate, UITextFieldDe
             showAlert(title: "Error", message: "Please enter a city name.")
             return
         }
-        fetchWeather(for: cityName) // Calls the city-based fetchWeather method
+        fetchWeather(for: cityName)
     }
     
     @IBAction func currentLctPressed(_ sender: UIButton) {
@@ -289,6 +268,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate, UITextFieldDe
             locationManager.requestLocation()
         }
     }
+    
     // MARK: - UITextFieldDelegate
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         textField.resignFirstResponder()
